@@ -36,6 +36,7 @@ interface TicketCardProps {
   onBack: () => void;
   onUpdate: (ticket: Ticket) => void;
   currentUser: string;
+  readOnly?: boolean;
 }
 
 const TicketCard = ({
@@ -43,6 +44,7 @@ const TicketCard = ({
   onBack,
   onUpdate,
   currentUser,
+  readOnly = false,
 }: TicketCardProps) => {
   const [newComment, setNewComment] = useState("");
   const [completionReport, setCompletionReport] = useState(
@@ -140,6 +142,11 @@ const TicketCard = ({
             <Badge className={getStatusColor(currentTicket.status)}>
               {getStatusText(currentTicket.status)}
             </Badge>
+            {readOnly && (
+              <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                Только просмотр
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -197,18 +204,20 @@ const TicketCard = ({
               </div>
 
               {/* Добавить комментарий */}
-              <div className="space-y-3">
-                <Textarea
-                  placeholder="Добавить комментарий..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  className="min-h-[100px]"
-                />
-                <Button onClick={addComment} disabled={!newComment.trim()}>
-                  <Icon name="Send" size={16} className="mr-2" />
-                  Добавить комментарий
-                </Button>
-              </div>
+              {!readOnly && (
+                <div className="space-y-3">
+                  <Textarea
+                    placeholder="Добавить комментарий..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                  <Button onClick={addComment} disabled={!newComment.trim()}>
+                    <Icon name="Send" size={16} className="mr-2" />
+                    Добавить комментарий
+                  </Button>
+                </div>
+              )}
             </Card>
           </div>
 
@@ -238,52 +247,77 @@ const TicketCard = ({
             </Card>
 
             {/* Управление статусом */}
-            <Card className="p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Управление</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Изменить статус
-                  </label>
-                  <Select
-                    value={currentTicket.status}
-                    onValueChange={updateStatus}
-                    disabled={currentTicket.status === "completed"}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="created">Создана</SelectItem>
-                      <SelectItem value="in_progress">В работе</SelectItem>
-                      <SelectItem value="problem">Проблема</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {currentTicket.status !== "completed" && (
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Отчет о выполнении
+            {!readOnly && (
+              <Card className="p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Управление</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Изменить статус
                     </label>
-                    <Textarea
-                      placeholder="Опишите выполненные работы..."
-                      value={completionReport}
-                      onChange={(e) => setCompletionReport(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                    <Button
-                      onClick={completeTicket}
-                      disabled={!completionReport.trim()}
-                      className="w-full bg-green-600 hover:bg-green-700"
+                    <Select
+                      value={currentTicket.status}
+                      onValueChange={updateStatus}
+                      disabled={currentTicket.status === "completed"}
                     >
-                      <Icon name="CheckCircle" size={16} className="mr-2" />
-                      Завершить заявку
-                    </Button>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="created">Создана</SelectItem>
+                        <SelectItem value="in_progress">В работе</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                )}
-              </div>
-            </Card>
+
+                  {currentTicket.status !== "completed" && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Завершение работы
+                      </label>
+                      <Textarea
+                        placeholder="Опишите выполненные работы..."
+                        value={completionReport}
+                        onChange={(e) => setCompletionReport(e.target.value)}
+                        className="min-h-[100px]"
+                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button
+                          onClick={completeTicket}
+                          disabled={!completionReport.trim()}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Icon name="CheckCircle" size={16} className="mr-2" />
+                          Завершить
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            if (completionReport.trim()) {
+                              const updatedTicket = {
+                                ...currentTicket,
+                                status: "problem" as const,
+                                completion_report: completionReport,
+                              };
+                              setCurrentTicket(updatedTicket);
+                              onUpdate(updatedTicket);
+                            }
+                          }}
+                          disabled={!completionReport.trim()}
+                          variant="destructive"
+                        >
+                          <Icon
+                            name="AlertTriangle"
+                            size={16}
+                            className="mr-2"
+                          />
+                          Проблема
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>

@@ -24,8 +24,9 @@ interface Ticket {
 
 const TechnicianPanel = ({ currentUser }: { currentUser: string }) => {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
-  // Моковые данные заявок, назначенных технику
+  // Назначенные технику заявки
   const [assignedTickets, setAssignedTickets] = useState<Ticket[]>([
     {
       id: 1,
@@ -55,6 +56,10 @@ const TechnicianPanel = ({ currentUser }: { currentUser: string }) => {
       technician: currentUser,
       comments: [],
     },
+  ]);
+
+  // Все остальные заявки в системе (только для просмотра)
+  const [allTickets] = useState<Ticket[]>([
     {
       id: 3,
       title: "Не запускается 1С",
@@ -62,15 +67,35 @@ const TechnicianPanel = ({ currentUser }: { currentUser: string }) => {
       status: "problem",
       user: "Дмитрий Козлов",
       created_date: "2024-01-14",
-      technician: currentUser,
+      technician: "Техник Михаил",
       comments: [
         {
           id: 2,
-          author: "Техник Алексей",
+          author: "Техник Михаил",
           text: "Обнаружена проблема с сервером БД",
           date: "2024-01-16 14:20",
         },
       ],
+    },
+    {
+      id: 4,
+      title: "Сломался монитор",
+      description: "Экран мерцает и периодически выключается",
+      status: "completed",
+      user: "Анна Васильева",
+      created_date: "2024-01-13",
+      technician: "Техник Сергей",
+      comments: [],
+      completion_report: "Заменен кабель питания, монитор работает исправно",
+    },
+    {
+      id: 5,
+      title: "Клавиатура не работает",
+      description: "Некоторые клавиши не нажимаются",
+      status: "created",
+      user: "Петр Иванов",
+      created_date: "2024-01-17",
+      comments: [],
     },
   ]);
 
@@ -112,6 +137,11 @@ const TechnicianPanel = ({ currentUser }: { currentUser: string }) => {
     );
   };
 
+  const handleTicketClick = (ticket: Ticket, readOnly = false) => {
+    setSelectedTicket(ticket);
+    setIsReadOnly(readOnly);
+  };
+
   if (selectedTicket) {
     return (
       <TicketCard
@@ -119,6 +149,7 @@ const TechnicianPanel = ({ currentUser }: { currentUser: string }) => {
         onBack={() => setSelectedTicket(null)}
         onUpdate={updateTicket}
         currentUser={currentUser}
+        readOnly={isReadOnly}
       />
     );
   }
